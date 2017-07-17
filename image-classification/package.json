@@ -1,0 +1,16 @@
+{
+  "name": "image-classification",
+  "version": "1.0.0",
+  "description": "Example of how to use HOG descriptor and SVM to classify images",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "jajoe",
+  "license": "MIT",
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "image-js": "^0.11.5",
+    "libsvm-js": "^0.1.1"
+  }
+}

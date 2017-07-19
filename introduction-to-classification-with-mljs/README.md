@@ -37,7 +37,7 @@ The first step will be to load the dataset and to delete the useless feature. In
 
 The data are in a csv file without header. Here is how to import it :
 
-```
+```javascript
 const csv = require('csvtojson');
 
 const csvFilePath = 'leaf.csv'; // Data
@@ -88,7 +88,7 @@ We will try three different methods : the SVM classifier and the naive bayes cla
 SVM
 ---
 
-```
+```javascript
 const SVM = require('libsvm-js/asm');
 
 let options = {
@@ -105,7 +105,7 @@ svm = new SVM(options);
 
 Bayes
 -----
-```
+```javascript
 const Bayes = require('ml-naivebayes');
 
 bayes = new Bayes();
@@ -115,7 +115,7 @@ Note : We don't need to give options to the naive bayes classifier.
 
 KNN
 ---
-```
+```javascript
 knn = new KNN(trainingSetX, trainingSetY, {k:5});
 ```
 
@@ -147,7 +147,7 @@ Evaluation
 
 When the model is trained, we can use it on the test set. We will predict the labels of these data and compare the predicted labels with the expected labels. Here is how we do that :
 
-```
+```javascript
 function test() {
     const result = svm.predict(testSetX);
     const testSetLength = testSetX.length
@@ -190,6 +190,270 @@ Conclusion :
 
 This tutorial show an example of solving of a classification problem with SVM and naive bayes classifier. You can use a lot of others Machine Learning methods to solve this problem (random forests, KNN, neural networks...) and the parameters given to this SVM in my example are probably not the best, but the goal of this tutorial is only to let you see how to use ML.JS to solve classification problems (you can have better precision than 78%).
 
+Source code :
+=============
+
+SVM
+----
+```javascript
+const SVM = require('libsvm-js/asm');
+const csv = require('csvtojson');
+
+let options = {
+    kernel : SVM.KERNEL_TYPES.POLYNOMIAL,
+    degree : 3,
+    gamma : 20,
+    cost : 100,
+    shrinking : false
+}
+
+const csvFilePath = 'leaf.csv'; // Data
+const names = ['type', 'specimenNumber', 'eccentricity', 'aspectRatio', 'elongation', 'solidity', 'stochasticConvexity', 'isoperimetricFactor', 'maxIndetationDepth', 'lobedness', 'intensity', 'contrast', 'smoothness', 'thirdMoment', 'uniformity', 'entropy']; // For header
+
+svm = new SVM(options);
+
+let seperationSize;
+let data = [], X = [], y = [];
+let trainingSetX = [], trainingSetY = [], testSetX = [], testSetY = [];
+
+csv({noheader: true, headers: names})
+    .fromFile(csvFilePath)
+    .on('json', (jsonObj) => {
+        data.push(jsonObj); // Push each object to data Array
+    })
+    .on('done', (error) => {
+        seperationSize = 0.9 * data.length;
+        data = shuffleArray(data);
+        dressData();
+    });
+
+function dressData() {
+    let types = new Set(); // To gather UNIQUE classes
+    data.forEach((row) => {
+        types.add(row.type);
+    });
+    typesArray = [...types]; // To save the different types of classes.
+
+    data.forEach((row) => {
+        let rowArray, typeNumber;
+        rowArray = Object.keys(row).map(key => parseFloat(row[key])).slice(2, 16); // We don't use the 2 first elements, which are the type (i.e class) and the specimen number (i.e ID)
+        typeNumber = typesArray.indexOf(row.type); // Convert type(String) to type(Number)
+
+        X.push(rowArray);
+        y.push(typeNumber);
+    });
+
+    trainingSetX = X.slice(0, seperationSize);
+    trainingSetY = y.slice(0, seperationSize);
+    testSetX = X.slice(seperationSize);
+    testSetY = y.slice(seperationSize);
+
+    train();
+}
+
+function train() {
+    svm.train(trainingSetX, trainingSetY);
+    test();
+}
+
+function test() {
+    const result = svm.predict(testSetX);
+    const testSetLength = testSetX.length
+    const predictionError = error(result, testSetY);
+    console.log(`Test Set Size = ${testSetLength} and number of Misclassifications = ${predictionError}`);
+}
+
+function error(predicted, expected) {
+    let misclassifications = 0;
+    for (var index = 0; index < predicted.length; index++) {
+        console.log(`truth : ${expected[index]} and prediction : ${predicted[index]}`);
+        if (predicted[index] !== expected[index]) {
+            misclassifications++;
+        }
+    }
+    return misclassifications;
+}
+
+
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
+}
+```
+
+KNN
+----
+```javascript
+const KNN = require('ml-knn');
+const csv = require('csvtojson');
+
+let knn;
+
+const csvFilePath = 'leaf.csv'; // Data
+const names = ['type', 'specimenNumber', 'eccentricity', 'aspectRatio', 'elongation', 'solidity', 'stochasticConvexity', 'isoperimetricFactor', 'maxIndetationDepth', 'lobedness', 'intensity', 'contrast', 'smoothness', 'thirdMoment', 'uniformity', 'entropy']; // For header
+
+let seperationSize;
+let data = [], X = [], y = [];
+let trainingSetX = [], trainingSetY = [], testSetX = [], testSetY = [];
+
+csv({noheader: true, headers: names})
+    .fromFile(csvFilePath)
+    .on('json', (jsonObj) => {
+        data.push(jsonObj); // Push each object to data Array
+    })
+    .on('done', (error) => {
+        seperationSize = 0.9 * data.length;
+        data = shuffleArray(data);
+        dressData();
+    });
+
+function dressData() {
+    let types = new Set(); // To gather UNIQUE classes
+    data.forEach((row) => {
+        types.add(row.type);
+    });
+    typesArray = [...types]; // To save the different types of classes.
+
+    data.forEach((row) => {
+        let rowArray, typeNumber;
+        rowArray = Object.keys(row).map(key => parseFloat(row[key])).slice(2, 16); // We don't use the 2 first elements, which are the type (i.e class) and the specimen number (i.e ID)
+        typeNumber = typesArray.indexOf(row.type); // Convert type(String) to type(Number)
+
+        X.push(rowArray);
+        y.push(typeNumber);
+    });
+
+    trainingSetX = X.slice(0, seperationSize);
+    trainingSetY = y.slice(0, seperationSize);
+    testSetX = X.slice(seperationSize);
+    testSetY = y.slice(seperationSize);
+
+    train();
+}
+
+function train() {
+    knn = new KNN(trainingSetX, trainingSetY, {k:5});
+    test();
+}
+
+function test() {
+    const result = knn.predict(testSetX);
+    const testSetLength = testSetX.length
+    const predictionError = error(result, testSetY);
+    console.log(`Test Set Size = ${testSetLength} and number of Misclassifications = ${predictionError}`);
+}
+
+function error(predicted, expected) {
+    let misclassifications = 0;
+    for (var index = 0; index < predicted.length; index++) {
+        console.log(`truth : ${expected[index]} and prediction : ${predicted[index]}`);
+        if (predicted[index] !== expected[index]) {
+            misclassifications++;
+        }
+    }
+    return misclassifications;
+}
+
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
+}
+```
+
+Naive bayes
+-----------
+```javascript
+const Bayes = require('ml-naivebayes');
+const csv = require('csvtojson');
+
+
+bayes = new Bayes();
+
+const csvFilePath = 'leaf.csv'; // Data
+const names = ['type', 'specimenNumber', 'eccentricity', 'aspectRatio', 'elongation', 'solidity', 'stochasticConvexity', 'isoperimetricFactor', 'maxIndetationDepth', 'lobedness', 'intensity', 'contrast', 'smoothness', 'thirdMoment', 'uniformity', 'entropy']; // For header
+
+let seperationSize;
+let data = [], X = [], y = [];
+let trainingSetX = [], trainingSetY = [], testSetX = [], testSetY = [];
+
+csv({noheader: true, headers: names})
+    .fromFile(csvFilePath)
+    .on('json', (jsonObj) => {
+        data.push(jsonObj); // Push each object to data Array
+    })
+    .on('done', (error) => {
+        seperationSize = 0.9 * data.length;
+        data = shuffleArray(data);
+        dressData();
+    });
+
+function dressData() {
+    let types = new Set(); // To gather UNIQUE classes
+    data.forEach((row) => {
+        types.add(row.type);
+    });
+    typesArray = [...types]; // To save the different types of classes.
+
+    data.forEach((row) => {
+        let rowArray, typeNumber;
+        rowArray = Object.keys(row).map(key => parseFloat(row[key])).slice(2, 16); // We don't use the 2 first elements, which are the type (i.e class) and the specimen number (i.e ID)
+        typeNumber = typesArray.indexOf(row.type); // Convert type(String) to type(Number)
+
+        X.push(rowArray);
+        y.push(typeNumber);
+    });
+
+    trainingSetX = X.slice(0, seperationSize);
+    trainingSetY = y.slice(0, seperationSize);
+    testSetX = X.slice(seperationSize);
+    testSetY = y.slice(seperationSize);
+
+    train();
+}
+
+function train() {
+    bayes.train(trainingSetX, trainingSetY);
+    test();
+}
+
+function test() {
+    const result = bayes.predict(testSetX);
+    const testSetLength = testSetX.length
+    const predictionError = error(result, testSetY);
+    console.log(`Test Set Size = ${testSetLength} and number of Misclassifications = ${predictionError}`);
+}
+
+function error(predicted, expected) {
+    let misclassifications = 0;
+    for (var index = 0; index < predicted.length; index++) {
+        console.log(`truth : ${expected[index]} and prediction : ${predicted[index]}`);
+        if (predicted[index] !== expected[index]) {
+            misclassifications++;
+        }
+    }
+    return misclassifications;
+}
+
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
+}
+```
 
 Note :
 ======

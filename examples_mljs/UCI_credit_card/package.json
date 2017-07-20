@@ -1,17 +1,16 @@
 {
-  "name": "UCI credit card",
+  "name": "tuto_svm_mljs",
   "version": "1.0.0",
-  "description": "use methods of mljs on a dataset from UCI",
+  "description": "example of classification with SVM and naive bayes (using mljs)",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "SVM",
-    "KNN",
     "MLJS",
     "classification",
-    "UCI dataset"
+    "leaf"
   ],
   "author": "jajoe",
   "license": "MIT",
@@ -19,6 +18,7 @@
     "csvtojson": "^1.1.7",
     "libsvm-js": "^0.1.1",
     "ml-knn": "^2.0.1",
-    "ml-naivebayes": "^1.0.3"
+    "ml-naivebayes": "^1.0.3",
+    "ml-pca": "^1.1.2"
   }
 }

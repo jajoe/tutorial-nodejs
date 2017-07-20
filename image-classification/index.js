@@ -1,5 +1,5 @@
 const fs = require("fs");
-const hog = require("./hog/src");
+const hog = require("hog-features");
 const {default: Image} = require('image-js');
 const SVM = require('libsvm-js/asm');
 

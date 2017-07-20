@@ -149,7 +149,7 @@ Source code
 The whole source code is the following :
 ```
 const fs = require("fs");
-const hog = require("./hog/src");
+const hog = require("features");
 const {default: Image} = require('image-js');
 const SVM = require('libsvm-js/asm');
 
@@ -244,23 +244,9 @@ loadData().then(function(){
 });
 ```
 
-Installation and running
-=========================
-
-**If you want to use the source code of this library, use the following instructions.** 
-The library for the HOG descriptor is not already in the NPM, so I've included it in this repo. To install everything, you have to do :
-```
-cd hog
-npm install
-cd ..
-npm install
-```
-Then, you are ready to run the code by using the command-line **node index.js**.
-
-
 Conclusion
 ==========
 
 With this dataset, the combinaison of HOG and SVM works fine ! However we have to precise that recognition of road signs isn't really hard. 
 You can easily use the source code with another dataset, provided you transform this dataset into the right format. A common exercice in image classification is the [CIFAR 10](https://www.cs.toronto.edu/~kriz/cifar.html).
-The library of the HOG descriptor will soon be available in the NPM. You can find the repository in the project [image-js](https://github.com/image-js/hog). The library used for the SVM is a part of the [mljs project](https://github.com/mljs). You can try other classifiers instead of SVM.
+The HOG-features library is a part of the project [image-js](https://github.com/image-js/hog). The library used for the SVM is a part of the [mljs project](https://github.com/mljs). You can try other classifiers instead of SVM.

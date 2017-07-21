@@ -1,11 +1,10 @@
-const KNN = require('ml-knn');
+const LogisticRegression = require('ml-logistic-regression');
 const csv = require('csvtojson');
-const Matrix = require('ml-matrix');
+const {Matrix} = require('ml-matrix');
 const PCA = require('ml-pca');
 
-let usePCA = true;
 
-let knn;
+let logreg = new LogisticRegression({numSteps: 10000, learningRate: 5e-3});
 
 const csvFilePath = 'leaf.csv'; // Data
 const names = ['type', 'specimenNumber', 'eccentricity', 'aspectRatio', 'elongation', 'solidity', 'stochasticConvexity', 'isoperimetricFactor', 'maxIndetationDepth', 'lobedness', 'intensity', 'contrast', 'smoothness', 'thirdMoment', 'uniformity', 'entropy']; // For header
@@ -41,28 +40,20 @@ function dressData() {
         y.push(typeNumber);
     });
 
-    trainingSetX = X.slice(0, seperationSize);
-    trainingSetY = y.slice(0, seperationSize);
-    testSetX = X.slice(seperationSize);
+    trainingSetX = new Matrix(X.slice(0, seperationSize));
+    trainingSetY = Matrix.columnVector(y.slice(0, seperationSize));
+    testSetX = new Matrix(X.slice(seperationSize));
     testSetY = y.slice(seperationSize);
-
     train();
 }
 
 function train() {
-    if (usePCA === true) {
-        trainingSetX = new Matrix(trainingSetX);
-        testSetX = new Matrix(testSetX);
-        var pca = new PCA(trainingSetX);
-        trainingSetX = pca.predict(trainingSetX, 2);
-        testSetX = pca.predict(testSetX, 2);
-    }
-    knn = new KNN(trainingSetX, trainingSetY, {k:5});
+    logreg.train(trainingSetX, trainingSetY);
     test();
 }
 
 function test() {
-    const result = knn.predict(testSetX);
+    const result = logreg.predict(new Matrix(testSetX));
     const testSetLength = testSetX.length
     const predictionError = error(result, testSetY);
     console.log(`Test Set Size = ${testSetLength} and number of Misclassifications = ${predictionError}`);

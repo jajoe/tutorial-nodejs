@@ -179,7 +179,7 @@ There are on average 7 or 8 errors on 34 predictions, so the accuracy is ~78%. (
 
 Bayes
 -----
-The results are very bad, only on average between 26% and 41% of right predictions. This method give bad results with this dataset. The naive baye works generally fine with text classification.
+The results are on average between 8 and 10 on predictions, so accuracy ~70% and 76% of right predictions. 
 
 KNN 
 ---
@@ -454,6 +454,190 @@ function shuffleArray(array) {
     return array;
 }
 ```
+
+Bonus : The source code of a logistic regression
+------------------------------------------------
+```javascript
+const LogisticRegression = require('ml-logistic-regression');
+const csv = require('csvtojson');
+const {Matrix} = require('ml-matrix');
+
+
+let logreg = new LogisticRegression({numSteps: 10000, learningRate: 5e-3});
+
+const csvFilePath = 'leaf.csv'; // Data
+const names = ['type', 'specimenNumber', 'eccentricity', 'aspectRatio', 'elongation', 'solidity', 'stochasticConvexity', 'isoperimetricFactor', 'maxIndetationDepth', 'lobedness', 'intensity', 'contrast', 'smoothness', 'thirdMoment', 'uniformity', 'entropy']; // For header
+
+let seperationSize;
+let data = [], X = [], y = [];
+let trainingSetX = [], trainingSetY = [], testSetX = [], testSetY = [];
+
+csv({noheader: true, headers: names})
+    .fromFile(csvFilePath)
+    .on('json', (jsonObj) => {
+        data.push(jsonObj); // Push each object to data Array
+    })
+    .on('done', (error) => {
+        seperationSize = 0.9 * data.length;
+        data = shuffleArray(data);
+        dressData();
+    });
+
+function dressData() {
+    let types = new Set(); // To gather UNIQUE classes
+    data.forEach((row) => {
+        types.add(row.type);
+    });
+    typesArray = [...types]; // To save the different types of classes.
+
+    data.forEach((row) => {
+        let rowArray, typeNumber;
+        rowArray = Object.keys(row).map(key => parseFloat(row[key])).slice(2, 16); // We don't use the 2 first elements, which are the type (i.e class) and the specimen number (i.e ID)
+        typeNumber = typesArray.indexOf(row.type); // Convert type(String) to type(Number)
+
+        X.push(rowArray);
+        y.push(typeNumber);
+    });
+
+    trainingSetX = new Matrix(X.slice(0, seperationSize));
+    trainingSetY = Matrix.columnVector(y.slice(0, seperationSize));
+    testSetX = new Matrix(X.slice(seperationSize));
+    testSetY = y.slice(seperationSize);
+    train();
+}
+
+function train() {
+    logreg.train(trainingSetX, trainingSetY);
+    test();
+}
+
+function test() {
+    const result = logreg.predict(new Matrix(testSetX));
+    const testSetLength = testSetX.length
+    const predictionError = error(result, testSetY);
+    console.log(`Test Set Size = ${testSetLength} and number of Misclassifications = ${predictionError}`);
+}
+
+function error(predicted, expected) {
+    let misclassifications = 0;
+    for (var index = 0; index < predicted.length; index++) {
+        console.log(`truth : ${expected[index]} and prediction : ${predicted[index]}`);
+        if (predicted[index] !== expected[index]) {
+            misclassifications++;
+        }
+    }
+    return misclassifications;
+}
+
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
+}
+```
+
+Bonus 2 : dimensionality reduction
+----------------------------------
+
+Here, each data has 30 features. We can reduce the number of features of the dataset by using different algorithms (PCA, Isomap, etc.). The goal ? Sometimes, results are better, and if you reduce the dimensionality to 2 or 3, you can plot the data (it can be very practice).
+I give you an example with the PCA. Below, the source code using a PCA :
+```javascript
+const KNN = require('ml-knn');
+const csv = require('csvtojson');
+const Matrix = require('ml-matrix');
+const PCA = require('ml-pca');
+
+let usePCA = true;
+
+let knn;
+
+const csvFilePath = 'leaf.csv'; // Data
+const names = ['type', 'specimenNumber', 'eccentricity', 'aspectRatio', 'elongation', 'solidity', 'stochasticConvexity', 'isoperimetricFactor', 'maxIndetationDepth', 'lobedness', 'intensity', 'contrast', 'smoothness', 'thirdMoment', 'uniformity', 'entropy']; // For header
+
+let seperationSize;
+let data = [], X = [], y = [];
+let trainingSetX = [], trainingSetY = [], testSetX = [], testSetY = [];
+
+csv({noheader: true, headers: names})
+    .fromFile(csvFilePath)
+    .on('json', (jsonObj) => {
+        data.push(jsonObj); // Push each object to data Array
+    })
+    .on('done', (error) => {
+        seperationSize = 0.9 * data.length;
+        data = shuffleArray(data);
+        dressData();
+    });
+
+function dressData() {
+    let types = new Set(); // To gather UNIQUE classes
+    data.forEach((row) => {
+        types.add(row.type);
+    });
+    typesArray = [...types]; // To save the different types of classes.
+
+    data.forEach((row) => {
+        let rowArray, typeNumber;
+        rowArray = Object.keys(row).map(key => parseFloat(row[key])).slice(2, 16); // We don't use the 2 first elements, which are the type (i.e class) and the specimen number (i.e ID)
+        typeNumber = typesArray.indexOf(row.type); // Convert type(String) to type(Number)
+
+        X.push(rowArray);
+        y.push(typeNumber);
+    });
+
+    trainingSetX = X.slice(0, seperationSize);
+    trainingSetY = y.slice(0, seperationSize);
+    testSetX = X.slice(seperationSize);
+    testSetY = y.slice(seperationSize);
+
+    train();
+}
+
+function train() {
+    if (usePCA === true) {
+        trainingSetX = new Matrix(trainingSetX);
+        testSetX = new Matrix(testSetX);
+        var pca = new PCA(trainingSetX);
+        trainingSetX = pca.predict(trainingSetX, 2);
+        testSetX = pca.predict(testSetX, 2);
+    }
+    knn = new KNN(trainingSetX, trainingSetY, {k:5});
+    test();
+}
+
+function test() {
+    const result = knn.predict(testSetX);
+    const testSetLength = testSetX.length
+    const predictionError = error(result, testSetY);
+    console.log(`Test Set Size = ${testSetLength} and number of Misclassifications = ${predictionError}`);
+}
+
+function error(predicted, expected) {
+    let misclassifications = 0;
+    for (var index = 0; index < predicted.length; index++) {
+        console.log(`truth : ${expected[index]} and prediction : ${predicted[index]}`);
+        if (predicted[index] !== expected[index]) {
+            misclassifications++;
+        }
+    }
+    return misclassifications;
+}
+
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
+}
+```
+
 
 Note :
 ======

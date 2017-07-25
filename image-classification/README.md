@@ -133,13 +133,13 @@ Tuning the source code
 ----------------------
 
 You can easily change the classifiers and the descriptor in this source code. To change the classifier, modify the following line and modify the content of the variable options if needed :
-```
+```javascript
 var classifier = new SVM(options);
 ```
 
 
 To change the classifier, you will have to change the following line (which is included in the two functions to load data) :
-```
+```javascript
 var descriptor = hog.extractHOG(image, options_hog);
 ```
 
@@ -147,7 +147,7 @@ Source code
 ===========
 
 The whole source code is the following :
-```
+```javascript
 const fs = require("fs");
 const hog = require("features");
 const {default: Image} = require('image-js');

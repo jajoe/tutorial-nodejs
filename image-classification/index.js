@@ -50,7 +50,6 @@ async function loadData(){
 
         kernel = new Kernel('polynomial', {degree: 3, scale: 1/X_train.length});
         K_train = kernel.compute(X_train).addColumn(0, range(1, X_train.length + 1));
-        console.log(X_train);
     }
 
     async function loadTestSet(){
@@ -101,7 +100,6 @@ loadData().then(function(){
 	}
         return misclassifications;
     }
-    console.log('serialize');
     fs.writeFileSync('serialized.txt', classifier.serializeModel()); // change this line if you use sth else than SVM
 
 });

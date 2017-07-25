@@ -19,9 +19,9 @@
     "csvtojson": "^1.1.7",
     "libsvm-js": "^0.1.1",
     "ml-knn": "^2.1.0",
-    "ml-logistic-regression": "^1.0.1",
+    "ml-logistic-regression": "^1.0.2",
     "ml-matrix": "^5.0.0",
     "ml-naivebayes": "^2.0.0",
-    "ml-pca": "^2.0.0"
+    "ml-pca": "^2.1.0"
   }
 }

@@ -3,8 +3,7 @@ const csv = require('csvtojson');
 
 let options = {
     kernel : SVM.KERNEL_TYPES.POLYNOMIAL,
-    degree : 3,
-    shrinking : false
+    degree : 3
 }
 
 const csvFilePath = 'leaf.csv'; // Data

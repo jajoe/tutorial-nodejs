@@ -3,7 +3,7 @@ const csv = require('csvtojson');
 const Matrix = require('ml-matrix');
 const PCA = require('ml-pca');
 
-let usePCA = true;
+let usePCA = false;
 
 let knn;
 
@@ -57,7 +57,7 @@ function train() {
         trainingSetX = pca.predict(trainingSetX, 2);
         testSetX = pca.predict(testSetX, 2);
     }
-    knn = new KNN(trainingSetX, trainingSetY, {k:5});
+    knn = new KNN(trainingSetX, trainingSetY, {k:1});
     test();
 }
 

@@ -4,7 +4,7 @@ const {Matrix} = require('ml-matrix');
 const PCA = require('ml-pca');
 
 
-let logreg = new LogisticRegression({numSteps: 10000, learningRate: 5e-3});
+let logreg = new LogisticRegression({numSteps: 5000, learningRate: 5e-3});
 
 const csvFilePath = 'leaf.csv'; // Data
 const names = ['type', 'specimenNumber', 'eccentricity', 'aspectRatio', 'elongation', 'solidity', 'stochasticConvexity', 'isoperimetricFactor', 'maxIndetationDepth', 'lobedness', 'intensity', 'contrast', 'smoothness', 'thirdMoment', 'uniformity', 'entropy']; // For header

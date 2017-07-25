@@ -2,14 +2,16 @@ const fs = require("fs");
 const hog = require("hog-features");
 const {default: Image} = require('image-js');
 const SVM = require('libsvm-js/asm');
+const Kernel = require('ml-kernel');
+const range = require('lodash.range');
 
 let options = {
     type: SVM.SVM_TYPES.NU_SVC, 
-    kernel : SVM.KERNEL_TYPES.POLYNOMIAL,
+    kernel : SVM.KERNEL_TYPES.PRECOMPUTED,
     degree : 3,
     nu : 0.1,
     shrinking : false
-}
+};
 
 let options_hog = {
     cellSize: 4,
@@ -17,12 +19,16 @@ let options_hog = {
     blockStride: 1,
     bins: 6,
     norm: "L2"
-}
+};
 
 let X_train = [];
 let Y_train = [];
 let X_test = [];
 let Y_test = [];
+let K_train;
+let K_test;
+
+let kernel;
 
 async function loadData(){
     // We will load the dataset
@@ -41,6 +47,10 @@ async function loadData(){
             X_train.push(descriptor);
             Y_train.push(elements[1]);
         }
+
+        kernel = new Kernel('polynomial', {degree: 3, scale: 1/X_train.length});
+        K_train = kernel.compute(X_train).addColumn(0, range(1, X_train.length + 1));
+        console.log(X_train);
     }
 
     async function loadTestSet(){
@@ -57,6 +67,7 @@ async function loadData(){
             X_test.push(descriptor);
             Y_test.push(elements[1]);
         }
+        K_test = kernel.compute(X_test, X_train).addColumn(0, range(1, X_test.length + 1));
     }
 
     await loadTrainingSet();
@@ -69,12 +80,12 @@ loadData().then(function(){
 
     var classifier = new SVM(options);
 
-    classifier.train(X_train, Y_train);
+    classifier.train(K_train, Y_train);
     test();
 
     function test() {
-        const result = classifier.predict(X_test);
-        const testSetLength = X_test.length
+        const result = classifier.predict(K_test);
+        const testSetLength = X_test.length;
         const predictionError = error(result, Y_test);
         const accuracy = ((parseFloat(testSetLength)-parseFloat(predictionError))/parseFloat(testSetLength))*100;
 	console.log(`Test Set Size = ${testSetLength} and accuracy ${accuracy}%`);
@@ -90,6 +101,7 @@ loadData().then(function(){
 	}
         return misclassifications;
     }
-    //console.log(classifier.serializeModel()); // change this line if you use sth else than SVM
+    console.log('serialize');
+    fs.writeFileSync('serialized.txt', classifier.serializeModel()); // change this line if you use sth else than SVM
 
 });

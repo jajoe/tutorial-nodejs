@@ -42,6 +42,10 @@ let X_train = [];
 let Y_train = [];
 let X_test = [];
 let Y_test = [];
+let K_train;
+let K_test;
+
+let kernel;
 
 async function loadData(){
     // We will load the dataset
@@ -60,6 +64,9 @@ async function loadData(){
             X_train.push(descriptor);
             Y_train.push(elements[1]);
         }
+
+        kernel = new Kernel('polynomial', {degree: 3, scale: 1/X_train.length});
+        K_train = kernel.compute(X_train).addColumn(0, range(1, X_train.length + 1));
     }
 
     async function loadTestSet(){
@@ -76,12 +83,14 @@ async function loadData(){
             X_test.push(descriptor);
             Y_test.push(elements[1]);
         }
+        K_test = kernel.compute(X_test, X_train).addColumn(0, range(1, X_test.length + 1));
     }
 
     await loadTrainingSet();
     await loadTestSet();
 }
 ```
+We use a precomputed kernel for the SVM [(see the explanations of scikit-learn)](http://scikit-learn.org/stable/modules/svm.html)
 
 Descriptor and classifier
 -------------------------
@@ -90,26 +99,18 @@ We have chosen a HOG descriptor and a SVM classifier. You can find their paramet
 HOG descriptor isn't the only descriptor that we can use. It can be interesting to try with descriptors like SIFT or SURF. Moreover, you can try others methods of Machine Learning. You can try this classification with a KNN classifier, or a Random Forest.
 The source code which corresponds to the SVM, its training and the predictions that it does is the following :
 ```javascript
-let options = {
-    type: SVM.SVM_TYPES.NU_SVC, 
-    kernel : SVM.KERNEL_TYPES.POLYNOMIAL,
-    degree : 3,
-    nu : 0.1,
-    shrinking : false
-}
-
 loadData().then(function(){
     // Now, the dataset should be loaded. We will apply the classification
     // Begin of the classification
 
     var classifier = new SVM(options);
 
-    classifier.train(X_train, Y_train);
+    classifier.train(K_train, Y_train);
     test();
 
     function test() {
-        const result = classifier.predict(X_test);
-        const testSetLength = X_test.length
+        const result = classifier.predict(K_test);
+        const testSetLength = X_test.length;
         const predictionError = error(result, Y_test);
         const accuracy = ((parseFloat(testSetLength)-parseFloat(predictionError))/parseFloat(testSetLength))*100;
 	console.log(`Test Set Size = ${testSetLength} and accuracy ${accuracy}%`);
@@ -125,9 +126,12 @@ loadData().then(function(){
 	}
         return misclassifications;
     }
+    fs.writeFileSync('serialized.txt', classifier.serializeModel()); // change this line if you use sth else than SVM
 
 });
 ```
+
+We export the parameters of the model into the file serialized.txt. 
 
 Tuning the source code
 ----------------------
@@ -149,17 +153,19 @@ Source code
 The whole source code is the following :
 ```javascript
 const fs = require("fs");
-const hog = require("features");
+const hog = require("hog-features");
 const {default: Image} = require('image-js');
 const SVM = require('libsvm-js/asm');
+const Kernel = require('ml-kernel');
+const range = require('lodash.range');
 
 let options = {
     type: SVM.SVM_TYPES.NU_SVC, 
-    kernel : SVM.KERNEL_TYPES.POLYNOMIAL,
+    kernel : SVM.KERNEL_TYPES.PRECOMPUTED,
     degree : 3,
     nu : 0.1,
     shrinking : false
-}
+};
 
 let options_hog = {
     cellSize: 4,
@@ -167,12 +173,16 @@ let options_hog = {
     blockStride: 1,
     bins: 6,
     norm: "L2"
-}
+};
 
 let X_train = [];
 let Y_train = [];
 let X_test = [];
 let Y_test = [];
+let K_train;
+let K_test;
+
+let kernel;
 
 async function loadData(){
     // We will load the dataset
@@ -191,6 +201,9 @@ async function loadData(){
             X_train.push(descriptor);
             Y_train.push(elements[1]);
         }
+
+        kernel = new Kernel('polynomial', {degree: 3, scale: 1/X_train.length});
+        K_train = kernel.compute(X_train).addColumn(0, range(1, X_train.length + 1));
     }
 
     async function loadTestSet(){
@@ -207,6 +220,7 @@ async function loadData(){
             X_test.push(descriptor);
             Y_test.push(elements[1]);
         }
+        K_test = kernel.compute(X_test, X_train).addColumn(0, range(1, X_test.length + 1));
     }
 
     await loadTrainingSet();
@@ -219,12 +233,12 @@ loadData().then(function(){
 
     var classifier = new SVM(options);
 
-    classifier.train(X_train, Y_train);
+    classifier.train(K_train, Y_train);
     test();
 
     function test() {
-        const result = classifier.predict(X_test);
-        const testSetLength = X_test.length
+        const result = classifier.predict(K_test);
+        const testSetLength = X_test.length;
         const predictionError = error(result, Y_test);
         const accuracy = ((parseFloat(testSetLength)-parseFloat(predictionError))/parseFloat(testSetLength))*100;
 	console.log(`Test Set Size = ${testSetLength} and accuracy ${accuracy}%`);
@@ -240,6 +254,7 @@ loadData().then(function(){
 	}
         return misclassifications;
     }
+    fs.writeFileSync('serialized.txt', classifier.serializeModel()); // change this line if you use sth else than SVM
 
 });
 ```

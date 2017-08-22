@@ -567,7 +567,7 @@ function shuffleArray(array) {
 Bonus 2 : dimensionality reduction
 ----------------------------------
 
-Here, each data has 30 features. We can reduce the number of features of the dataset by using different algorithms (PCA, Isomap, etc.). The goal ? Sometimes, results are better, and if you reduce the dimensionality to 2 or 3, you can plot the data (it can be very practice).
+Here, each data has 30 features. We can reduce the number of features of the dataset by using different algorithms (PCA, Isomap, etc.). The goal ? The less dimensions you will have, the speeder the computation will be and if you reduce the dimensionality to 2 or 3, you can plot the data (it can be very practice).
 I give you an example with the PCA. Below, the source code using a PCA :
 ```javascript
 const KNN = require('ml-knn');
